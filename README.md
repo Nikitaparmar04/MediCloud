@@ -1,72 +1,158 @@
-# 🏥 MediCloud Hub
+# 🏥 MediCare Hub - Highly Available AWS Architecture
 
-A comprehensive **Healthcare Management Platform** built with the MERN stack. This platform allows patients to securely store, manage, and share their medical records with healthcare providers.
+A **fault-tolerant medical application** deployed on AWS using the **Reliability Pillar** of the AWS Well-Architected Framework. This project demonstrates building a self-healing, highly available infrastructure for healthcare applications.
 
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
-![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-
----
-
-## ✨ Features
-
-- 🔐 **Secure Authentication** - JWT-based user authentication
-- 📋 **Medical Records Management** - Upload, view, and organize medical reports
-- 👨‍⚕️ **Doctor Access** - Share records securely with healthcare providers
-- 📱 **Responsive Design** - Works seamlessly on all devices
-- 🔒 **Data Security** - Encrypted data storage and transmission
+![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![EC2](https://img.shields.io/badge/Amazon_EC2-FF9900?style=for-the-badge&logo=amazon-ec2&logoColor=white)
+![RDS](https://img.shields.io/badge/Amazon_RDS-527FFF?style=for-the-badge&logo=amazon-rds&logoColor=white)
+![Route53](https://img.shields.io/badge/Route_53-8C4FFF?style=for-the-badge&logo=amazonroute53&logoColor=white)
+![CloudWatch](https://img.shields.io/badge/CloudWatch-FF4F8B?style=for-the-badge&logo=amazoncloudwatch&logoColor=white)
 
 ---
 
-## 🛠️ Tech Stack
+## 📋 Project Overview
+
+**MediCare Hub** is a lightweight medical application used by clinics to manage patient records and appointment tracking. 
+
+### ❌ The Problem (Before)
+Originally hosted using traditional infrastructure, it lacked:
+- **Fault Tolerance** - Single point of failure
+- **High Availability** - No redundancy across zones
+- **Auto-Recovery** - Manual intervention needed for failures
+- **Data Resilience** - Risk of losing critical medical data
+
+> ⚠️ Any single EC2 or database failure could lead to **downtime** and **loss of access to critical medical data**.
+
+### ✅ The Solution (After)
+The application is now **lifted and shifted to AWS** using best practices from the **Reliability Pillar** of the AWS Well-Architected Framework. The new infrastructure:
+- Auto-recovers from failures
+- Continues serving users during disruptions
+- Handles instance crashes and AZ outages gracefully
+
+---
+
+## 🎯 Project Objectives
+
+As a **Solutions Architect** focused on reliability engineering, this project demonstrates:
+
+| Objective | AWS Service | Purpose |
+|-----------|-------------|---------|
+| Multi-AZ Architecture | VPC, Subnets | Fault tolerance across Availability Zones |
+| Auto Scaling | EC2 Auto Scaling | Self-healing & automatic capacity adjustment |
+| DNS Failover | Route 53 | Intelligent routing with health checks |
+| Database Resilience | RDS Multi-AZ | Automatic database failover |
+| Shared Storage | EFS | Persistent, shared file system across instances |
+| Monitoring | CloudWatch | Real-time metrics and alarms |
+
+---
+
+## 🏗️ AWS Architecture
+
+```
+                                    ┌─────────────────────────────────────────────────────────┐
+                                    │                        AWS Cloud                         │
+                                    │  ┌─────────────────────────────────────────────────────┐│
+                                    │  │                         VPC                          ││
+         ┌──────────┐               │  │  ┌────────────────────┐  ┌────────────────────┐     ││
+         │  Users   │               │  │  │   Availability     │  │   Availability     │     ││
+         └────┬─────┘               │  │  │     Zone 1         │  │     Zone 2         │     ││
+              │                     │  │  │                    │  │                    │     ││
+              ▼                     │  │  │  ┌──────────────┐  │  │  ┌──────────────┐  │     ││
+       ┌─────────────┐              │  │  │  │ Public Subnet│  │  │  │ Public Subnet│  │     ││
+       │  Route 53   │◄─────────────┼──┼──┤  │              │  │  │  │              │  │     ││
+       │(DNS+Health) │              │  │  │  │  ┌────────┐  │  │  │  │  ┌────────┐  │  │     ││
+       └──────┬──────┘              │  │  │  │  │  EC2   │  │  │  │  │  │  EC2   │  │  │     ││
+              │                     │  │  │  │  │(Web+API)│  │  │  │  │(Web+API)│  │  │     ││
+              ▼                     │  │  │  │  └────┬───┘  │  │  │  └────┬───┘  │  │     ││
+     ┌────────────────┐             │  │  │  └───────┼──────┘  │  └───────┼──────┘  │     ││
+     │ Load Balancer  │◄────────────┼──┼──┤          │         │         │         │     ││
+     │     (ALB)      │             │  │  │          ▼         │         ▼         │     ││
+     └────────────────┘             │  │  │    ┌─────────────────────────────┐     │     ││
+              │                     │  │  │    │           EFS               │     │     ││
+              │                     │  │  │    │    (Shared Storage)         │     │     ││
+              ▼                     │  │  │    └─────────────────────────────┘     │     ││
+     ┌────────────────┐             │  │  │                                        │     ││
+     │  Auto Scaling  │             │  │  │  ┌────────────────┐  ┌────────────────┐│     ││
+     │     Group      │             │  │  │  │ Private Subnet │  │ Private Subnet ││     ││
+     └────────────────┘             │  │  │  │  ┌──────────┐  │  │  ┌──────────┐  ││     ││
+                                    │  │  │  │  │ RDS      │◄─┼──┼─►│ RDS      │  ││     ││
+                                    │  │  │  │  │ (Primary)│  │  │  │(Standby) │  ││     ││
+                                    │  │  │  │  └──────────┘  │  │  └──────────┘  ││     ││
+                                    │  │  │  └────────────────┘  └────────────────┘│     ││
+                                    │  │  └────────────────────────────────────────┘     ││
+                                    │  └─────────────────────────────────────────────────┘│
+                                    │                                                      │
+                                    │         ┌────────────────────────────────┐          │
+                                    │         │      CloudWatch Monitoring      │          │
+                                    │         │   (Metrics, Alarms, Dashboards) │          │
+                                    │         └────────────────────────────────┘          │
+                                    └─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🛠️ AWS Services Used
+
+### Compute & Networking
+| Service | Configuration | Purpose |
+|---------|---------------|---------|
+| **Amazon VPC** | Multi-AZ with Public/Private Subnets | Network isolation |
+| **Amazon EC2** | t2.micro/t3.micro in Auto Scaling Group | Application hosting |
+| **Application Load Balancer** | Cross-zone load balancing | Traffic distribution |
+| **Auto Scaling Group** | Min: 2, Max: 4, Health checks | Self-healing & scaling |
+
+### Database & Storage
+| Service | Configuration | Purpose |
+|---------|---------------|---------|
+| **Amazon RDS** | MySQL/PostgreSQL Multi-AZ | Database with automatic failover |
+| **Amazon EFS** | Regional file system | Shared storage for uploads |
+
+### DNS & Routing
+| Service | Configuration | Purpose |
+|---------|---------------|---------|
+| **Route 53** | Health checks + Failover routing | DNS management & failover |
+
+### Monitoring
+| Service | Configuration | Purpose |
+|---------|---------------|---------|
+| **CloudWatch** | Custom metrics & alarms | Monitoring & alerting |
+
+---
+
+## 🔧 Application Tech Stack
 
 ### Frontend
-| Technology | Purpose |
-|------------|---------|
-| React 19 | UI Framework |
-| Vite | Build Tool |
-| Tailwind CSS | Styling |
-| React Router DOM | Navigation |
-| Axios | API Calls |
-| Lucide React | Icons |
+- **React 19** - Modern UI framework
+- **Vite** - Fast build tool
+- **Tailwind CSS** - Utility-first styling
+- **Axios** - API communication
 
 ### Backend
-| Technology | Purpose |
-|------------|---------|
-| Node.js | Runtime |
-| Express.js | Web Framework |
-| MongoDB | Database |
-| Mongoose | ODM |
-| JWT | Authentication |
-| Multer | File Uploads |
-| bcryptjs | Password Hashing |
+- **Node.js** - JavaScript runtime
+- **Express.js** - Web framework
+- **MongoDB/MySQL** - Database
+- **JWT** - Authentication
 
 ---
 
 ## 📁 Project Structure
 
 ```
-MediCloud_Hub/
-├── frontend/                 # React Frontend
+MediCare_Hub/
+├── frontend/                 # React Frontend (Deployed to EC2)
 │   ├── src/
 │   │   ├── components/       # Reusable UI components
 │   │   ├── pages/            # Page components
-│   │   ├── context/          # React Context
-│   │   ├── hooks/            # Custom hooks
 │   │   ├── services/         # API services
-│   │   ├── utils/            # Utility functions
-│   │   └── routes.jsx        # App routes
+│   │   └── routes.jsx        # Application routes
 │   └── package.json
 │
-├── backend/                  # Node.js Backend
+├── backend/                  # Node.js Backend (Deployed to EC2)
 │   ├── config/               # Configuration files
 │   ├── middleware/           # Express middleware
-│   ├── models/               # Mongoose models
+│   ├── models/               # Database models
 │   ├── routes/               # API routes
-│   ├── utils/                # Utility functions
-│   ├── uploads/              # File uploads directory
+│   ├── uploads/              # File uploads (mounted to EFS)
 │   └── server.js             # Entry point
 │
 └── README.md
@@ -74,122 +160,99 @@ MediCloud_Hub/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Deployment Architecture
 
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (local or Atlas)
-- Git
+### Step 1: VPC Setup
+- Create VPC with CIDR block
+- Create 2 Public Subnets (different AZs)
+- Create 2 Private Subnets (different AZs)
+- Configure Internet Gateway & NAT Gateway
+- Set up Route Tables
 
-### Installation
+### Step 2: Database Layer (RDS Multi-AZ)
+- Launch RDS instance with Multi-AZ enabled
+- Configure in Private Subnets
+- Set up Security Groups
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Nikitaparmar04/MediCloud.git
-   cd MediCloud
-   ```
+### Step 3: Storage Layer (EFS)
+- Create EFS file system
+- Configure mount targets in each AZ
+- Mount to EC2 instances for shared storage
 
-2. **Setup Backend**
-   ```bash
-   cd backend
-   npm install
-   ```
+### Step 4: Compute Layer (EC2 + Auto Scaling)
+- Create Launch Template with user data
+- Configure Auto Scaling Group across AZs
+- Set up health checks and scaling policies
 
-3. **Configure Environment Variables**
-   
-   Create a `.env` file in the `backend` directory:
-   ```env
-   PORT=5000
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   ```
+### Step 5: Load Balancing (ALB)
+- Create Application Load Balancer
+- Configure Target Groups
+- Set up health checks
 
-4. **Setup Frontend**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+### Step 6: DNS & Failover (Route 53)
+- Configure hosted zone
+- Create health checks
+- Set up failover routing policy
 
-### Running the Application
-
-1. **Start Backend Server**
-   ```bash
-   cd backend
-   npm start
-   ```
-   Server runs on: `http://localhost:5000`
-
-2. **Start Frontend Development Server**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   App runs on: `http://localhost:5173`
+### Step 7: Monitoring (CloudWatch)
+- Create custom dashboards
+- Set up alarms for critical metrics
+- Configure SNS notifications
 
 ---
 
-## 📜 Available Scripts
+## 📊 Reliability Features
 
-### Frontend
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-
-### Backend
-| Command | Description |
-|---------|-------------|
-| `npm start` | Start production server |
-| `npm run dev` | Start with nodemon (hot reload) |
+| Feature | Implementation | Benefit |
+|---------|----------------|---------|
+| **Multi-AZ Deployment** | Resources in 2+ AZs | Survives AZ failure |
+| **Auto Scaling** | Min 2, Max 4 instances | Self-healing capacity |
+| **Health Checks** | ALB + Route 53 | Automatic failover |
+| **RDS Multi-AZ** | Synchronous standby | Zero data loss failover |
+| **EFS** | Regional storage | Shared, persistent data |
+| **CloudWatch Alarms** | CPU, Memory, Disk | Proactive monitoring |
 
 ---
 
-## 🔗 API Endpoints
+## 📈 Key Learning Outcomes
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | User registration |
-| POST | `/api/auth/login` | User login |
-| GET | `/api/reports` | Get all reports |
-| POST | `/api/reports` | Upload new report |
-| GET | `/api/reports/:id` | Get single report |
-| DELETE | `/api/reports/:id` | Delete report |
+After completing this project, you'll master:
 
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- ✅ Designing **fault-tolerant Multi-AZ architectures**
+- ✅ **Auto-scaling EC2 instances** with health checks and recovery
+- ✅ Configuring **DNS failover** using Route 53 health checks
+- ✅ Setting up **Multi-AZ RDS** for database resilience
+- ✅ Implementing **shared storage with EFS**
+- ✅ Building **self-healing infrastructure** on AWS
+- ✅ Applying **AWS Well-Architected Framework** best practices
 
 ---
 
-## 📄 License
+## 🔗 AWS Well-Architected Framework
 
-This project is licensed under the ISC License.
+This project aligns with the **Reliability Pillar** principles:
+
+| Design Principle | Implementation |
+|------------------|----------------|
+| Automatically recover from failure | Auto Scaling + Health Checks |
+| Test recovery procedures | Simulate AZ failures |
+| Scale horizontally | Multiple EC2 instances behind ALB |
+| Stop guessing capacity | Auto Scaling based on demand |
+| Manage change through automation | Infrastructure as Code |
 
 ---
 
 ## 👩‍💻 Author
 
-**Nikita Parmar**
+**Nikita Parmar**  
+*Solutions Architect*
 
-- GitHub: [@Nikitaparmar04](https://github.com/Nikitaparmar04)
-
----
-
-## 🙏 Acknowledgments
-
-- [React Documentation](https://react.dev)
-- [MongoDB Documentation](https://docs.mongodb.com)
-- [Tailwind CSS](https://tailwindcss.com)
-- [Express.js](https://expressjs.com)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Nikitaparmar04)
 
 ---
 
-<p align="center">Made with ❤️ for Healthcare</p>
+<p align="center">
+  <b>🏗️ Built with AWS Best Practices for Reliability</b>
+  <br>
+  <i>Ensuring healthcare data is always available when it matters most</i>
+</p>
