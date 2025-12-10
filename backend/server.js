@@ -32,6 +32,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Simple health check for load balancer
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
 // Health check route
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Medicare Hub API is running' });
