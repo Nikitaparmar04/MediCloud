@@ -1,5 +1,5 @@
 // API Configuration (Vite uses import.meta.env)
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://backend-ALB-656451251.ap-south-1.elb.amazonaws.com/api';
 
 // API Endpoints
 export const API_ENDPOINTS = {
